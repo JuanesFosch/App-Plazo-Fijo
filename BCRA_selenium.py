@@ -1,16 +1,18 @@
 
-from selenium import webdriver # Webdriver es la funcionalidad principal de Selenium para interactuar con sitios web.
-from selenium.webdriver.common.by import By # Importa el método 'By' para seleccionar atributos de los elementos HTML.
-import time # Sirve para dar un intervalo de tiempo a las ventanas para que se mantengan abiertas.
-import requests # Sirve para 'pedir' información, como la URL de un sitio.
+from selenium import webdriver #---------Webdriver es la funcionalidad principal de Selenium para interactuar con sitios web.
+from selenium.webdriver.common.by import By #---------Importa el método 'By' para seleccionar atributos de los elementos HTML.
+import time #---------Sirve para dar un intervalo de tiempo a las ventanas para que se mantengan abiertas.
+import requests #---------Sirve para 'pedir' información, como la URL de un sitio.
 import pandas as pd 
+from sqlalchemy import create_engine #---------Sirve para exportar un DataFrame de Pandas a una base de datos MySQL.
+
 
 #service = Service(executable_path="/path/to/chromedriver")
 #print(service)
 
 options = webdriver.ChromeOptions()
 
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
+options.add_experimental_option('excludeSwitches', ['enable-logging']) # Esto se hace para que la ventana del navegador se mantenga abierta.
 
 driver = webdriver.Chrome(options=options)
 
@@ -319,12 +321,39 @@ df_uva.drop([0],inplace=True)
 #df_uva.to_csv('datos_uva.csv',encoding='utf-8',index=False)
 #time.sleep(5)
 
-#------------Unión de todos los Dataframe
+#------------Unión de todos los Dataframe.
 
 df_completo= df_bancos.set_index('Fecha').join([df_cer.set_index('Fecha'),df_uva.set_index('Fecha')])
 #print(df_completo)
 print(df_completo.head(15))
-print(df_completo.info())
+#print(df_completo.info())
 
 # Exportar como csv. 
-df_completo.to_csv('datos_completo.csv',encoding='utf-8',index=True)
+#df_completo.to_csv('datos_completo.csv',encoding='utf-8',index=True)
+
+#fechas=pd.date_range(start="01/02/2023",end="01/03/2023",freq='D')
+fechas1=pd.to_datetime([f_desde,f_hasta],format='%d/%m/%Y',errors='ignore')
+fechas=pd.date_range(start=fechas1[0],end=fechas1[1],freq='D')
+
+fec=pd.DataFrame(fechas,columns=['Fecha'])
+fec['Fecha']=fec['Fecha'].dt.strftime('%d/%m/%Y')
+
+df_completo= fec.set_index('Fecha').join([df_bancos.set_index('Fecha'),df_cer.set_index('Fecha'),df_uva.set_index('Fecha')])
+#print(df_completo)
+#df_completo.to_csv('datos_completo.csv',encoding='utf-8',index=True)
+#print(fec)
+
+#------------Carga a la base de datos.
+
+# Credenciales para conectarse a la base.
+hostname="localhost"
+dbname="airbnb"
+uname="root"
+pwd=""
+
+# Crea el 'engine' de SQLAlchemy para conectarse a la base de datos MySQL.
+engine = create_engine("mysql+mysqlconnector://{user}:{pw}@{host}/{db}"
+				.format(host=hostname, db=dbname, user=uname, pw=pwd))
+
+# Convierte el dataframe a una tabla de sql.                                   
+#df_completo.to_sql('tasas', engine, index=True)

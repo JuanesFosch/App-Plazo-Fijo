@@ -114,7 +114,7 @@ afterPopup = driver.window_handles
 afterPopup.remove(afterPopup[0])
 #print(afterPopup)
 driver.switch_to.window(afterPopup[0])
-#print(driver.current_url)
+print(driver.current_url)
 
 #--------Busca la tabla donde están las columnas y filas con los datos.------
 

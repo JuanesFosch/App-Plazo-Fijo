@@ -65,7 +65,7 @@ valores_de_búsqueda={'bancos_privados':["Bancos Privados","listaSeries_ctl02_ch
                 'UVA':["UVA","listaSeries_ctl02_chkSeleccion"]}
 
 # Valores para insertar en los input de fecha.
-f_desde="01/02/2023"
+f_desde="01/02/2023" # Deberían ser un campo 'Input'
 f_hasta="01/03/2023"
 
 # Si se busca por número de serie todos a la vez, las checkbox repiten los nombres, entonces no sería correcto.

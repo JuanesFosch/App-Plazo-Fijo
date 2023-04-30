@@ -49,14 +49,18 @@ términos_de_búsqueda={'bancos_privados':["Bancos Privados","listaSeries_ctl02_
 f_desde="01/02/2023" # Deberían ser un campo 'Input'
 f_hasta="01/03/2023"
 
-nombres_columnas= {"bancos_original": 'Tasas de interés - Por depósitos - Series diarias - BADLAR - Tasas de interés por depósitos a plazo fijo de 30 a 35 días de plazo - Depósitos de más de un millón de pesos, en porcentaje nominal anual - Bancos privados' 
+nombres_columnas1= {"bancos_original": 'Tasas de interés - Por depósitos - Series diarias - BADLAR - Tasas de interés por depósitos a plazo fijo de 30 a 35 días de plazo - Depósitos de más de un millón de pesos, en porcentaje nominal anual - Bancos privados' 
             , "bancos_nuevo": 'Badlar',
             "cer_original": 'Tasas de interés - Tasas de interés y coeficientes de ajuste establecidos por el BCRA - Coeficiente de estabilización de referencia (CER), serie diaria',
             "cer_nuevo": 'CER',
             "uva_original": 'Unidad de Valor Adquisitivo (UVA)- en pesos - base 31.3.2016=14.05',
             "uva_nuevo": 'UVA' }
 
-
+nombres_columnas= {"bancos": ['Tasas de interés - Por depósitos - Series diarias - BADLAR - Tasas de interés por depósitos a plazo fijo de 30 a 35 días de plazo - Depósitos de más de un millón de pesos, en porcentaje nominal anual - Bancos privados', 
+            'Badlar'],
+            "cer": ['Tasas de interés - Tasas de interés y coeficientes de ajuste establecidos por el BCRA - Coeficiente de estabilización de referencia (CER), serie diaria'
+            ,'CER'],
+            "uva": ['Unidad de Valor Adquisitivo (UVA)- en pesos - base 31.3.2016=14.05', 'UVA'] }
 # Si se busca por número de serie todos a la vez, las checkbox repiten los nombres, entonces no sería correcto.
 # Hay que buscar por texto, y ahí es seguro el nombre de la checkbox que se genera. Los números de serie sirven para ubicar visualmente cada checkbox en el HTML.
 
@@ -81,8 +85,11 @@ def búsqueda_por_texto(término):
     check_categoría= driver.find_element(By.ID,value=términos_de_búsqueda[f'{término}'][1])
     check_categoría.click()
 
+flag = 'bancos_privados'
+búsqueda_por_texto(flag)
 
-búsqueda_por_texto('bancos_privados')
+#print(flag)
+
 
 #--------Aceptar selección---(PODRÍA SER UNA FUNCIÓN PARA TODOS LOS CLICKEOS)
 ver=driver.find_element(By.ID,value="btnAcept")
@@ -141,21 +148,50 @@ df_categoría = table[0] # Este índice de la tabla de HTML es el DataFrame.
 df_categoría.rename(columns={'Tasas de interés - Por depósitos - Series diarias - BADLAR - Tasas de interés por depósitos a plazo fijo de 30 a 35 días de plazo - Depósitos de más de un millón de pesos, en porcentaje nominal anual - Bancos privados': 'Badlar'}, inplace=True)
 """
 
-def busca_tabla(nombre_original,nombre_nuevo):
+def busca_tabla(original,nuevo):
     """Busca la tabla donde están las columnas y filas con los datos. Renombra las columnas"""
     req=requests.get(driver.current_url)
     table = pd.read_html(req.text,attrs={'id':'GrdResultados'},encoding='utf-8')
+
     df_categoría = table[0] # Este índice de la tabla de HTML es el DataFrame.
-    df_categoría.rename(columns={f"{nombre_original}" : f"{nombre_nuevo}"}, inplace=True)
+    if nuevo == 'UVA':          # En este caso es necesario formatear los nombres antes de cambiarlos, porque vienen raros de origen. 
+        df_categoría.columns=df_categoría.columns.str.encode('ascii',errors='ignore')  
+        df_categoría.columns=df_categoría.columns.str.decode('utf-8')
+
+    df_categoría.rename(columns={f"{original}" : f"{nuevo}"}, inplace=True)   # Reemplaza la columna con el texto LITERAL indicado (original)
+
+    #print(df_categoría)
     return df_categoría
 
-for value in nombres_columnas.values():
-    print(value)
-    #df_categoría= busca_tabla(value,value)
-    #print(df_categoría)
 
+
+if flag == 'bancos_privados':
+    nombre_original= nombres_columnas["bancos"][0]
+    nombre_nuevo= nombres_columnas["bancos"][1]
+elif flag == 'CER':
+    nombre_original= nombres_columnas["cer"][0]
+    nombre_nuevo= nombres_columnas["cer"][1]
+elif flag == 'UVA':
+    nombre_original= nombres_columnas["uva"][0]
+    nombre_nuevo= nombres_columnas["uva"][1]
+    #print(nombre_original,nombre_nuevo)
+resultado = busca_tabla(nombre_original,nombre_nuevo)
+
+
+print(resultado)
+if resultado.columns[1] == 'Badlar':
+    flag = 'CER'
+#búsqueda_por_texto(flag)
+print(flag)
+búsqueda_por_texto('flag')
+print(resultado)  
+"""for key in términos_de_búsqueda.keys():
+    flag= key
+búsqueda_por_texto(flag)            
+"""
+  
 #---TENDRÍA QUE HACER UNA LISTA DE LOS QUE YA SE PASARON O ALGO ASÍ---
-
+"""
 #-----Solucionar problemas de caracteres raros. (PUEDE SER UNA FUNCIÓN)--TENER EN CUENTA EL CASO LOS NOMBRES DE COLUMNAS DE UVA---
 #---TIENE QUE DEVOLVER 3 DF POR SEPARADO, PARA TRATARLOS DESPUES Y JUNTARLOS---
 def formatos(df_categoría):
